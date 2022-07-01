@@ -1,0 +1,342 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap');
+
+html {
+    /* 62.5% font-size 0f 16px = 10px */
+    font-size: 62.5%;
+    line-height: 1.15; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+    font-family: 'Inter', sans-serif;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  body {
+    width: 136.6rem;
+    margin: 0;
+  }
+  
+  :root {
+    --color-navbar: #484848;
+    --color-blur: #FFF0C9;
+    --color-white: #FFFFFF;
+    --color-title: #1A407B;
+    --color-body: #707070;
+    --color-link: #184B83;
+    --color-footer: #CAFEFF;
+    --color-navblur: #C9EFC9;
+    --color-button: #07A6FF;
+  }
+
+  /* Main CBloack NavBar============================= */
+
+  /* Links */
+  a {
+    text-decoration: none;
+  }
+
+  /* Lists */
+.list {
+    list-style: none;
+    padding-left: 0;
+  }
+  .list-main__stats {
+    margin-top: 10.8rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .item__stat{
+    height: 3.6rem;
+    font: normal normal normal 26px/39px Poppins;
+    text-align: left;
+    letter-spacing: 0;
+    color: var(--color-title);
+    opacity: 1;
+    margin: 0;
+  }
+  .item__stat__description {
+    height: 2.3rem;
+    text-align: left;
+    font: normal normal normal 16px/25px Poppins;
+    letter-spacing: 0;
+    color: var(--color-body);
+    opacity: 1;
+    margin-top: 1rem;
+  }
+
+  .list__footer {
+    margin: 0;
+    width: 10.5rem;
+    text-align: left;
+    font: normal normal normal 16px/25px Poppins;
+    letter-spacing: 0;
+    color: var(--color-title);
+    opacity: 1;
+  }
+  .list__footer > li {
+    height: 2.3rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Navbars */
+.nav {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 2.9rem;
+    align-items: center;
+  }
+
+  .nav__icon {
+    height: 4.7rem;
+    width: 15.6rem;
+    opacity: 1;
+    margin-inline-end: auto;
+  }
+
+  .nav__list {
+    display: flex;
+    justify-content: space-between;
+    width: 42.9rem;
+    font-size: 1.6rem;
+    max-height: 100%;
+    opacity: 1;
+  }
+
+  .nav__item {
+    font: normal normal normal 16px/25px Poppins;
+    opacity: 1;
+    letter-spacing: 0;
+    height: 2.3rem;
+    color: var(--color-navbar);
+  }
+
+  .nav-container {
+    /* 108.8rem is fixed to match the nav-attachment-container, also block class needs to be removed
+    from mainblock section tag */
+    width: 108.8rem;
+    height: auto;
+  }
+
+  .nav__item > span:hover {
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .nav__blur {
+    top: -2.6rem;
+    width: 17.5rem;
+    height: 17.5rem;
+    background: var(--color-navblur) 0% 0% no-repeat padding-box;
+    opacity: 0.56;
+    filter: blur(50px);
+  }
+  .nav__footer{
+    padding-top: 3.8rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .nav__footer > div {
+    /* An approx that prevents css overflow */
+    margin-right: 25.2rem;
+  }
+
+  /* Classes that allow z-index overlays */
+  .stack-top-layer1 {
+    z-index: 9;
+  }
+
+  .nav-attachment-container {
+    margin: 0;
+    position: relative;
+    width: auto;
+    height: 8.4rem;
+    padding: 0 13.9rem 0 13.9rem;
+  }
+  .box {
+    position: absolute;
+  }
+
+
+
+  /* Blocks */
+  .block {
+    width: auto;
+    padding: 0 13.9rem 0 13.9rem;
+  }
+  .block--main {
+    top: 0px;
+    left: 0px;
+    height: 76.8rem;
+    /* UI Properties */
+    background: transparent linear-gradient(61deg, #CAFEFF 0%, #F0FEFF 57%, #E7F3F4 100%) 0% 0% no-repeat padding-box;
+    opacity: 1;
+  }
+  .block--second {
+    height: 55.2rem;
+    background: var(--color-white) 0% 0% no-repeat padding-box;
+    opacity: 1;
+  }
+  .block--third {
+    /* height of 76.8rem is only temporary */
+    height: 76.8rem;
+    background: var(--color-white) 0% 0% no-repeat padding-box;
+    opacity: 1;
+  }
+  .block--footer {
+    
+    height: 27.5rem;
+    background: var(--color-footer) 0% 0% no-repeat padding-box;
+    opacity: 1;
+  }
+  .block__title {
+    height: 5.1rem;
+    text-align: center;
+    /* third normal to medium is an invalid property value */
+    font: normal normal normal 36px/55px Poppins;
+    letter-spacing: 0;
+    color: var(--color-title);
+    opacity: 1;
+    margin: 0;
+    padding: 7rem 0 7rem 0;
+  }
+  .block__heading {
+    height: 3.3rem;
+    font: normal normal normal 24px/35px Poppins;
+    letter-spacing: 0;
+    color: var(--color-title);
+    opacity: 1;
+    margin: 4rem 0 1rem 0;
+  }
+
+  
+  /* Main Container Block Media ================================ */
+  /* Media Objects */
+.media-container {
+  display: flex;
+}
+
+.media__blur {
+  width: 67.5rem;
+  /* 68.3rem is an approx after clipping with the navbar */
+  height: 68.3rem;
+  background: var(--color-blur) 0% 0% no-repeat padding-box;
+  opacity: 0.32;
+  filter: blur(5rem);
+  /* temporary styling */
+  border-radius: 30rem;
+}
+.media__description {
+  margin: 2rem 0 3.1rem 0;
+  width: 44.8rem;
+  height: 3.3rem;
+  font: normal normal normal 24px/35px Poppins;
+  letter-spacing: 0;
+  color: var(--color-body);
+  opacity: 1;
+}
+.group23__img {
+  margin: auto;
+  /* background: transparent url('../public/Mask\ Group\ 23.png') 0% 0% no-repeat padding-box; */
+  opacity: 1;
+  width: 51.8rem;
+  height: 68.2rem;
+}
+
+.media__title {
+  margin: 0;
+  width: 35.4rem;
+  height: 13.3rem;
+  font: normal normal normal 46px/69px Poppins;
+  letter-spacing: 0;
+  color: var(--color-title);
+  opacity: 1;
+}
+.media__body {
+  margin: 0;
+  padding: 17rem 0 0 13.9rem;
+  width: 55.2rem;
+  /* 51.3rem is an approx */
+  height: 51.3rem;
+}
+
+.group23-90-container {
+  z-index: 10;
+  float: inline-end;
+}
+
+/* Buttons */
+.btn{
+  font: normal normal normal 20px/30px Poppins;
+  border: 0;
+  border-radius: 4px;
+  white-space: nowrap;
+  cursor: pointer;
+  height: 5.6rem;
+  letter-spacing: 0;
+  color: var(--color-white);
+  outline: 0;
+  background: var(--color-button) 0% 0% no-repeat padding-box;
+  box-shadow: 1px 1px 8px var(--color-button);
+  opacity: 1;
+}
+.btn__home {
+  width: 26.8rem;
+}
+.btn__home:hover {
+  background: var(--color-link) 0% 0% no-repeat padding-box;
+}
+
+
+/* Second Block Features */
+.features-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+}
+
+.feature__icon {
+  height: 7rem;
+  width: auto;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+.feature-description {
+  height: 17.8rem;
+  width: 35.2rem;
+  font: normal normal normal 20px/30px Poppins;
+  letter-spacing: 0;
+  color: var(--color-body);
+}
+.feature-description > p {
+  margin: 0;
+}
+.feature-description > a {
+  color: var(--color-link);
+}
+
+.care-container {
+  display: flex;
+  justify-content: space-between;
+  text-align: center;
+}
+.care__virtual > p {
+  margin-top: 3rem;
+}
+.care__in-person > p {
+  margin-top: 3rem;
+}
+
+.mask-group4__img {
+  margin: auto;
+  /* background: transparent url('../public/MaskGroup4.png') 0% 0% no-repeat padding-box; */
+  opacity: 1;
+  width: 53.6rem;
+  height: 42rem;
+}
+.mask-group5__img {
+  margin: auto;
+  /* background: transparent url('../public/Mask\ Group\ 5.png') 0% 0% no-repeat padding-box; */
+  opacity: 1;
+  width: 53.6rem;
+  height: 42rem;
+}

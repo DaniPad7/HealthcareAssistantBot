@@ -1,7 +1,16 @@
+import MainBlock from "./components/MainBlock";
+import SecondBlock from "./components/SecondBlock";
+import ThirdBlock from "./components/ThirdBlock";
+import AppFooter from "./components/AppFooter"
 
 function App() {
   return (
-    <h1>Hi</h1>
+    <>
+    <MainBlock></MainBlock>
+    <SecondBlock></SecondBlock>
+    <ThirdBlock></ThirdBlock>
+    <AppFooter></AppFooter>
+    </>
   );
 }
 
