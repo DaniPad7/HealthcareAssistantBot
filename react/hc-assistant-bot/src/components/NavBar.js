@@ -2,7 +2,7 @@ const NavBar = () => {
     return (
         <div className="nav-attachment-container">
             <div className="nav__blur box"></div>
-        <div className="nav-container box stack-top-layer1">
+        <div className="nav-container box">
             <nav className="nav">
                 <div className="nav__icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="156" height="47" viewBox="0 0 156 47">
