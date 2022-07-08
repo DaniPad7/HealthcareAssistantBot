@@ -36,6 +36,15 @@ html {
   /* Links */
   a {
     text-decoration: none;
+    color: var(--color-navbar);
+  }
+  .link__auth {
+    padding-left: 1.5rem;
+  }
+  .link__auth > a {
+    font: normal normal normal 20px/30px Poppins;
+    letter-spacing: 0;
+    color: var(--color-link);
   }
 
   /* Lists */
@@ -120,9 +129,10 @@ html {
     height: auto;
   }
 
-  .nav__item > span:hover {
+  .nav__item:hover > a {
     font-weight: bold;
     cursor: pointer;
+    /* color: var(--color-navbar); */
   }
 
   .nav__blur {
@@ -225,6 +235,68 @@ html {
     margin: 4rem 0 1rem 0;
   }
 
+  /* FAQ */
+  .faq-container {
+    padding: 0 13.9rem 0 13.9rem;
+  }
+  .faq__title-one {
+    margin: 2rem 0 1rem 0;
+  }
+  .faq__list-question {
+    margin: 0.9rem 0 1.5rem 0;
+    height: 2.3rem;
+    font: normal normal 600 16px/25px Poppins;
+    color: var(--color-body);
+  }
+  .faq__list {
+    margin: 0;
+    padding-top: 3.1rem;
+  }
+  .faq__questions {
+    padding-bottom: 2.4rem;
+    border-bottom: 0.1rem solid #D5D5D5;
+  }
+  .faq__title-two {
+    margin: 3rem 0 3rem 0;
+  }
+
+  .media-container > .chat__button {
+    padding-left: 0;
+  }
+
+  /* Contact Us */
+  .contact__input {
+    /* padding temp */
+    padding: 0 2rem 0 2rem;
+    width: 40.2rem;
+    height: 4.8rem;
+    margin-bottom: 1rem;
+    outline: none;
+    background: var(--color-white) 0% 0% no-repeat padding-box;
+    border: 0.1rem solid #D5D5D5;
+    border-radius: 1rem;
+  }
+  .contact__input::placeholder {
+    height: 2.3rem;
+    color: var(--color-navbar);
+    font: normal normal normal 16px/25px Poppins;
+  }
+  .contact__textarea::placeholder {
+    color: var(--color-navbar);
+    font: normal normal normal 16px/25px Poppins;
+  }
+  .contact__textarea {
+    margin-left: 1.6rem;
+    /* padding temp */
+    padding: 1.4rem 0 0 2rem;
+    width: 42.2rem;
+    height: 15.4rem;
+    border: 0.1rem solid #D5D5D5;
+    border-radius: 1rem;
+    resize: none;
+    outline: none;
+  }
+
   
   /* Main Container Block Media ================================ */
   /* Media Objects */
@@ -258,6 +330,24 @@ html {
   color: var(--color-body);
   opacity: 1;
 }
+.description__auth {
+  margin-bottom: 2.5rem;
+}
+.media__checkbox-auth {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1rem 3rem 0;
+}
+#remember-me {
+  width: 2.4rem;
+  height: 2.4rem;
+  margin: 0 1rem 0 0;
+}
+#remember-me-label {
+  font: normal normal normal 16px/25px Poppins;
+  letter-spacing: 0;
+  color: var(--color-body);
+}
 .group23__img {
   /* padding-top: 1rem; */
 }
@@ -279,12 +369,12 @@ html {
   height: 13.3rem;
 }
 .login__title {
-  font: normal normal normal 36px/55px Poppins;
+  font: normal normal 500 36px/55px Poppins;
   width: 9.6rem;
   height: 5.1rem;
 }
 .signup__title {
-  font: normal normal normal 36px/55px Poppins;
+  font: normal normal 500 36px/55px Poppins;
   width: 13.8rem;
   height: 5.1rem;
 }
@@ -383,6 +473,40 @@ html {
   width: 26.8rem;
 }
 .btn__home:hover {
+  background: var(--color-button-hover) 0% 0% no-repeat padding-box;
+}
+.btn__auth {
+  width: 16.9rem;
+  padding: 1.4rem 3.9rem 1.4rem 3.9rem;
+}
+.btn__auth:hover {
+  background: var(--color-button-hover) 0% 0% no-repeat padding-box;
+}
+
+.btn__faq-tab {
+  height: 3.7rem;
+  color: var(--color-body);
+  background: transparent linear-gradient(74deg, #E9E9E9 0%, #F6F6F6 100%) 0% 0% no-repeat padding-box;
+  font: normal normal 500 16px/25px Poppins;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0.7rem 1.4rem;
+}
+.btn__faq-tab-clicked {
+  /* some properties do not override the .btn class */
+  height: 3.7rem;
+  color: var(--color-title);
+  background: transparent linear-gradient(72deg, var(--color-footer) 0%, #E7F3F4 100%) 0% 0% no-repeat padding-box;
+  font: normal normal 500 16px/25px Poppins;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0.7rem 1.4rem;
+}
+.btn__contact {
+  margin-top: 2rem;
+  padding: 1.4rem 3.9rem 1.4rem 3.9rem;
+}
+.btn__contact:hover {
   background: var(--color-button-hover) 0% 0% no-repeat padding-box;
 }
 
@@ -579,14 +703,14 @@ textarea::placeholder {
   justify-content: space-between;
   box-shadow: 0 0 0.3rem var(--color-chat-shadow);
 }
-.chat__bot {
+.media-flex-alignitems-center {
   display: flex;
   align-items: center;
 }
-.chat__bot > svg {
+.media-flex-alignitems-center > svg {
   margin-left: 1.4rem;
 }
-.chat__bot > p {
+.media-flex-alignitems-center > p {
   margin: 0 0 0 0.9rem;
   height: 2.3rem;
   font: normal normal 600 16px/25px Poppins;

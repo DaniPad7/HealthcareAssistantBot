@@ -69,7 +69,7 @@ const ChatBot = () => {
                 </button>
             </div>
             <div className="chat-handoff">
-                <div className="chat__bot">
+                <div className="media-flex-alignitems-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="33.763" height="32.473" viewBox="0 0 33.763 32.473">
                     <g id="bot" transform="translate(-113.303 -150.148)">
                         <g id="Group_16" data-name="Group 16" transform="translate(113.303 150.148)">

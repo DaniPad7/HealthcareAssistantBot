@@ -19,7 +19,7 @@ const SecondBlock = () => {
                         <p className="block__heading">All Products</p>
                         <div className="feature-description">
                             <p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour</p>
-                            <a>Show &gt;&gt;</a>
+                            <a href="#">Show &gt;&gt;</a>
                         </div>
                     </div>
                     <div className="features__vitamins">
@@ -41,7 +41,7 @@ const SecondBlock = () => {
                         <p className="block__heading">Vitamins</p>
                         <div className="feature-description">
                             <p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour</p>
-                            <a>Show &gt;&gt;</a>
+                            <a href="#">Show &gt;&gt;</a>
                         </div>
                     </div>
                     <div className="features__personal-care">
@@ -59,7 +59,7 @@ const SecondBlock = () => {
                         <p className="block__heading">Personal Care</p>
                         <div className="feature-description">
                             <p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour</p>
-                            <a>Show &gt;&gt;</a>
+                            <a href="#">Show &gt;&gt;</a>
                         </div>
                     </div>
 

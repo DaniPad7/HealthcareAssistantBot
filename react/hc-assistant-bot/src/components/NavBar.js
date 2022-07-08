@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const NavBar = () => {
     return (
         <div className="nav-attachment-container">
@@ -16,11 +18,11 @@ const NavBar = () => {
                     </svg>
                 </div>
                 <ul className="list nav__list">
-                    <li className="nav__item"><span>Home</span></li>
-                    <li className="nav__item"><span>Login</span></li>
-                    <li className="nav__item"><span>Sign Up</span></li>
-                    <li className="nav__item"><span>Contact Us</span></li>
-                    <li className="nav__item"><span>FAQ</span></li>
+                    <li className="nav__item"><Link to={"/"}>Home</Link></li>
+                    <li className="nav__item"><Link to={"/login"}>Login</Link></li>
+                    <li className="nav__item"><Link to={"/signup"}>Sign Up</Link></li>
+                    <li className="nav__item"><Link to={"/faq"}>Contact Us</Link></li>
+                    <li className="nav__item"><Link to={"/faq"}>FAQ</Link></li>
                 </ul>
             </nav>
         </div>
