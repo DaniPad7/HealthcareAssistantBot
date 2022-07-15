@@ -4,69 +4,107 @@ import Login from "./components/Login";
 import SignUp from "./components/SignUp";
 import FAQ from './components/FAQ';
 import ChatBot from "./components/ChatBot";
-import 'dotenv/config';
 import { Client as ConversationsClient } from "@twilio/conversations";
 import { useEffect, useState } from 'react';
+import { Component } from 'react';
 
-function App() {
-  const conversationsClient = null;
-  const initState = {
-    name: localStorage.getItem("name") || "",
-    loggedIn: this.name !== "",
-    token: null,
-    statusString: null,
-    conversationsReady: false,
-    conversations: [],
-    selectedConversationSid: null,
-    newMessage: ""
-  };
-  const [state, setState] = useState(initState);
-  useEffect(() => {
-    if (state.loggedIn) {
-      getToken();
-      setState({ statusString: "Fetching credentials...." });
+class App extends Component {
+  constructor(props) {
+    super(props);
+    console.log("rendering");
+
+    this.state = {
+      name: localStorage.getItem("name") || "",
+      loggedIn: !!localStorage.getItem("name"),
+      // token: null,
+      statusString: null,
+      conversationsReady: false,
+      conversations: [],
+      selectedConversationSid: /*process.env.TWILIO...*/"",
+      // newMessage: ""
+    };
+
+  }
+
+  componentDidMount = () => {
+    if (this.state.loggedIn) {
+      this.getToken(this.state.name)
     }
-  });
-  // Implement
-  const login = (name) => { };
-  const logout = (event) => { };
-  const getToken = () => {
-    const myToken = "example";
-    setState({ token: myToken }, initConversations);
+    else {
+      this.getToken("testPineapple")
+    }
   };
 
-  const initConversations = async () => {
-    window.conversationsClient = ConversationsClient;
-    conversationsClient = ConversationsClient(state.token /**Created in the backend */);
-    setState({ statusString: "Connecting to Twilio..." });
+  // Possibly add a componenetDidUpdate on state.name
+  
+  // Implement
+  login = (name) => {
+    if (name !== "") {
+      localStorage.setItem("name", name);
+      this.setState({ name, loggedIn: true });
+    }
+   };
+  logout = (event) => { };
+  getToken = async (name) => {
+    // const response = await fetch("http://localhost:8080/twilio/create-token", {
+    //   body: name, method: "POST"
+    // });
+    // const myToken = response; /**Manipulate response */
+    // Maybe don't use setState but await a token and pass it as a param to initConversations.
+    const myToken = "INSERT TOKEN";
+    console.log(myToken);
+    await this.initConversations(myToken);
+  };
 
-    conversationsClient.on("connectionStateChanged", state => {
+  initConversations = async (token) => {
+    window.conversationsClient = ConversationsClient;
+    this.conversationsClient = new ConversationsClient(token);
+    console.log("Connecting to Twilio...");
+    this.setState({ statusString: "Connecting to Twilio..." });
+
+    this.conversationsClient.on("connectionStateChanged", state => {
       switch (state) {
         case "connecting":
-          setState({ statusString: "Connecting to Twilio", status: "default" });
+          console.log("Connecting");
+          this.setState({ statusString: "Connecting to Twilio", status: "default" });
+          break;
         case "connected":
-          setState({ statusString: "You are connected.", status: "success" });
+          console.log("Connected");
+          this.setState({ statusString: "You are connected.", status: "success" });
+          break;
         case "disconnecting":
-          setState({ statusString: "Disconnecting from Twilio...", conversationsReady: false, status: "default" });
+          console.log("Disconnecting");
+          this.setState({ statusString: "Disconnecting from Twilio...", conversationsReady: false, status: "default" });
+          break;
         case "disconnected":
-          setState({ statusString: "Disconnected.", conversationsReady: false, status: "warning" });
+          console.log("Disconnected");
+          this.setState({ statusString: "Disconnected.", conversationsReady: false, status: "warning" });
+          break;
         case "denied":
-          setState({ statusString: "Connection failed.", conversationsReady: false, status: "error" });
+          console.log("Denied");
+          this.setState({ statusString: "Connection failed.", conversationsReady: false, status: "error" });
+          break;
         default:
-          setState({ statusString: "Connection failed. Not denied.", conversationsReady: false, status: "error" });
+          console.log("Hello I am in default");
+          this.setState({ statusString: "Connection failed. Not denied.", conversationsReady: false, status: "error" });
       }
     });
-    conversationsClient.on("conversationJoined", conversation => {
-      setState({ conversations: [...state.conversations, conversation] });
+    this.conversationsClient.on("conversationJoined", (conversation) => {
+      console.log("Setting conversation joined");
+      this.setState({ conversations: [...this.state.conversations, conversation] });
     });
-    conversationsClient.on("conversationLeft", thisConversation => {
-      setState({ conversations: [...state.conversations.filter(it => it !== thisConversation)] });
+    this.conversationsClient.on("conversationLeft", (thisConversation) => {
+      console.log("Setting conversation left");
+      this.setState({ conversations: [...this.state.conversations.filter(it => it !== thisConversation)] });
     });
   };
   // selectedConversationSid must be put to a default of only one conversation.
-  const { conversations, selectedConversationSid, status } = state;
-  const selectedConversation = conversations.find(it => it.sid === selectedConversationSid);
-  return (
+  
+  render() {
+    const { conversations, selectedConversationSid } = this.state;
+    const selectedConversation = conversations.find(it => it.sid === selectedConversationSid);
+    console.log("Slected conversation ", selectedConversation);
+    return (
     <>
       <BrowserRouter>
         <div>
@@ -77,10 +115,10 @@ function App() {
             <Route path="/" exact element={<Home></Home>}></Route>
           </Routes>
         </div>
-        <ChatBot conversationProxy={selectedConversation} myIdentity={state.name}></ChatBot>
+        <ChatBot conversationProxy={selectedConversation} myIdentity={"testPineapple"/**temp */}></ChatBot>
       </BrowserRouter>
     </>
-  );
+  )};
 }
 
 export default App;

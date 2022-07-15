@@ -1,22 +1,35 @@
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState } from "react";
+import ConversationsMessages from "./ConversationsMessages";
 
-const ChatBot = (props) => {
-    const initState = {
-        newMessage: "",
-        conversationProxy: props.conversationProxy,
-        messages: [],
-        loadingState: "initializing",
-        boundConversations: new Set(),
+class ChatBot extends Component {
+    constructor(props) {
+        super(props);
+        console.log("In chatbot what is conversation in constructor ", props.conversationProxy);
+        this.state = {
+            newMessage: "",
+            conversationProxy: props.conversationProxy,
+            messages: [],
+            loadingState: "initializing",
+            boundConversations: new Set(),
+        };
+    }
+    loadMessagesFor = async (thisConversation) => {
+        if (this.props.conversationProxy.sid === thisConversation.sid) {
+            console.log("Getting the messages for this conversation");
+            try {
+                const messagePaginator = await thisConversation.getMessages();
+                if (this.props.conversationProxy === thisConversation && (this.state.messages.length !== messagePaginator.items.length)) {
+                    console.log("Changing the state message prop ", messagePaginator);
+                    this.setState({ messages: messagePaginator.items, loadingState: "ready" });
+                    console.log("State again: ", this.state);
+                }
+            } catch (err) {
+                console.error("Could not fetch messages Implement Retry", err);
+                // this.setState({ loadingState: "failed" }); causes loop
+            }
+        }
     };
-    const [state, setState] = useState(initState);
-    useEffect(() => {
-        document.getElementById("Component_1_1").addEventListener('click', () => {
-            openForm();
-        });
-        document.getElementById("chat-header-close-btn").addEventListener('click', () => {
-            closeForm();
-        });
-
+    componentDidMount = () => {
         const openForm = () => {
             document.getElementById("Component_1_1").style.display = "none";
             document.getElementById("bot-svg").style.display = "none";
@@ -27,50 +40,76 @@ const ChatBot = (props) => {
             document.getElementById("Component_1_1").style.display = "block";
             document.getElementById("bot-svg").style.display = "block";
         };
-
-        if (state.conversationProxy) {
-            loadMessagesFor(state.conversationProxy);
-            if (!state.boundConversations.has(state.conversationProxy)) {
-                let newConversation = state.conversationProxy;
-                newConversation.on("message added", m => messageAdded(m, newConversation));
-                setState({ boundConversations: new Set([...state.boundConversations, newConversation]) });
-            }
-        }
-        // state.conversationProxy is newly added, start running in incremental steps to catch bugs
-        // better.
-    }, [state.conversationProxy]);
-
-    const loadMessagesFor = async (thisConversation) => {
-        if (state.conversationProxy === thisConversation) {
-            try {
-                const messagePaginator = await thisConversation.getMessages();
-                if (state.conversationProxy === thisConversation) {
-                    setState({ message: messagePaginator.items, loadingState: "ready" });
-                }
-            } catch (err) {
-                console.error("Could not fetch messages Implement Retry", err);
-                setState({ loadingState: "failed" });
+        document.getElementById("Component_1_1").addEventListener('click', () => {
+            openForm();
+        });
+        document.getElementById("chat-header-close-btn").addEventListener('click', () => {
+            closeForm();
+        });
+        
+        if (this.state.conversationProxy) {
+            this.loadMessagesFor(this.state.conversationProxy);
+            if (!this.state.boundConversations.has(this.state.conversationProxy)) {
+                let newConversation = this.state.conversationProxy;
+                console.log("New Conversation in Chatbot ", newConversation);
+                newConversation.on("messageAdded", m => this.messageAdded(m, newConversation));
+                this.setState({ boundConversations: new Set([...this.state.boundConversations, newConversation]) });
             }
         }
     };
-
-    const messageAdded = (message, targetConversation) => {
-        if (targetConversation === state.conversationProxy) {
-            setState((prevState, props) => ({ messages: [...prevState.messages, message] }));
+    componentDidUpdate = (prevProps, prevState) => {
+        console.log("Run didUpdate and here are the prev state ",prevState, this.props.conversationProxy);
+        if (this.state.conversationProxy !== this.props.conversationProxy) {
+            
+            this.loadMessagesFor(this.props.conversationProxy);
+            if (!this.state.boundConversations.has(this.props.conversationProxy)) {
+                let newConversation = this.props.conversationProxy;
+                console.log("New Conversation in Chatbot ", newConversation);
+                newConversation.on("messageAdded", m => this.messageAdded(m, newConversation));
+                this.setState({ boundConversations: new Set([...this.state.boundConversations, newConversation]) });
+            }
         }
     };
-    const onMessageChanged = (event) => {
-        setState({ newMessage: event.target.value });
+    componentWillUnmount = () => {
+        const openForm = () => {
+            document.getElementById("Component_1_1").style.display = "none";
+            document.getElementById("bot-svg").style.display = "none";
+            document.getElementById("my-form").style.display = "block";
+        };
+        const closeForm = () => {
+            document.getElementById("my-form").style.display = "none";
+            document.getElementById("Component_1_1").style.display = "block";
+            document.getElementById("bot-svg").style.display = "block";
+        };
+        document.getElementById("Component_1_1").removeEventListener("click", () => {openForm()});
+        document.getElementById("chat-header-close-btn").removeEventListener("click", () => {closeForm()});
+    }
+
+    // static getDerivedStateFromProps
+
+    
+    messageAdded = (message, targetConversation) => {
+        console.log("Here si the message and useState might not work again ", message);
+        if (targetConversation === this.props.conversationProxy) {
+            console.log("Setting the new messages state");
+            this.setState((prevState, props) => ({ messages: [...prevState.messages, message] }));
+            console.log("State ", this.state);
+        }
+    };
+    onMessageChanged = (event) => {
+        this.setState({ newMessage: event.target.value });
     };
 
-    const sendMessage = (event) => {
+    sendMessage = (event) => {
         event.preventDefault();
-        const message = state.newMessage;
-        setState({ newMessage: "" });
-        state.conversationProxy.sendMessage(message);
+        const message = this.state.newMessage;
+        this.setState({ newMessage: "" });
+        console.log("This is the chatbot state at send message ", this.state);
+        this.props.conversationProxy.sendMessage(message);
     };
 
-    return (<>
+    render() {
+        return (<>
         <div className="static chat-popup">
             <form className="form-container" id="my-form">
                 <div className="chat-header">
@@ -162,11 +201,11 @@ const ChatBot = (props) => {
                     <button className="btn btn__handoff" type="button">Connect Representative</button>
                 </div>
                 <div style={{ height: "35.9rem" }}>
-                    {/* <ConversationMessages identity={props.myIdentity} messages={state.messages}></ConversationMessages> */}
+                    <ConversationsMessages identity={this.props.myIdentity} messages={this.state.messages}></ConversationsMessages>
                 </div>
                 <div className="chat-input">
-                    <textarea className="" onChange={onMessageChanged} value={state.newMessage} placeholder="Message..." maxLength={100}></textarea>
-                    <button onClick={sendMessage} className="chat__button btn-bottom-one" type="button" title="Send">
+                    <textarea className="" onChange={this.onMessageChanged} value={this.state.newMessage} placeholder="Message..." maxLength={100}></textarea>
+                    <button onClick={this.sendMessage} className="chat__button btn-bottom-one" type="button" title="Send">
                         <span>
                             <picture>
                                 <source type="image/png" srcSet="/MaskGroup2.png 1x, /MaskGroup2@2x.png 2x" />
@@ -238,7 +277,7 @@ const ChatBot = (props) => {
             </svg>
         </div>
     </>
-    );
+    )};
 };
 
 export default ChatBot;

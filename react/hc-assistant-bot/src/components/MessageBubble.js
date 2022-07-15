@@ -1,45 +1,60 @@
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState } from "react";
 import ChatIcon from "./ChatIcon";
 
-const MessageBubble = (props) => {
-    const initState = {
-        hasMedia: props.message.type === "media",
-        mediaDownloadFailed: false,
-        mediaUrl: null
-    };
-    const [state, setState] = useState(initState);
-    useEffect(async () => {
-        setState({ ...state, type: (await props.message.getParticipant()).type });
-        if (state.hasMedia) {
-            try {
-                const url = await props.message.media.getContemporaryUrl();
-                setState({ mediaUrl: url });
-            } catch (err) {
-                setState({ mediaDownloadFailed: true });
+class MessageBubble extends Component {
+    constructor(props) {
+        super(props);
+        console.log("Hello I amde it to constructor");
+        this.state = {
+            hasMedia: props.message.type === "media",
+            mediaDownloadFailed: false,
+            mediaUrl: null
+        };
+
+    }
+    componentDidMount = () => {
+        const getType = async () => {
+            // console.log("I am retrieving the message type of ", this.props.message);
+            this.setState({ ...this.state, type: (await this.props.message.getParticipant()).type });
+            if (this.state.hasMedia) {
+                try {
+                    const url = await this.props.message.media.getContemporaryUrl();
+                    this.setState({ mediaUrl: url });
+                } catch (err) {
+                    this.setState({ mediaDownloadFailed: true });
+                }
             }
-        }
-        document.getElementById(props.message.sid).scrollIntoView({ behavior: "smooth" });
-    });
-    // Some JS for determining styles
-    return (
-        <li id={m.sid} className={itemStyle}>
-            <div className={divStyle}>
+        };
+        getType();
+        
+        document.getElementById(this.props.message.sid).scrollIntoView({ behavior: "smooth" });
+    };
+    componentDidUpdate = (prevProps, prevState, snapshot) => {
+        document.getElementById(this.props.message.sid).scrollIntoView({ behavior: "smooth" });
+    };
+    // Some JS for determining styles with props.direction
+    render() { 
+        const m = this.props.message;
+        const type = this.state.type;
+        return (
+        <li id={m.sid} className="message__item">
+            <div className="message__item-div">
                 <div>
                     <strong>
-                        {/* {type === "whatsapp" && (<Icon style={{ fontSize: "1.6rem" }} component={WhatsAppIcon}></Icon>)} */}
-                        {type === "chat" && <span><ChatIcon></ChatIcon></span>/*(<Icon style={{ fontSize: "1.6rem" }} component={ChatIcon}></Icon>)*/}
-                        {type === "sms" && (<Icon type={"mobile"}></Icon>)}
+                        {type === "chat" && (<span><ChatIcon></ChatIcon></span>)/*(<Icon style={{ fontSize: "1.6rem" }} component={ChatIcon}></Icon>)*/}
+                        {type === "sms" && (<span type="mobile">From Mobile</span>)}
                         {` ${m.author}`}
                     </strong>
                     <br />
-                    <div className={styles.medias}>
+                    <div className="make sure to remove this div">
+                        {/* No media allowed in the chat */}
                         {/* {state.hasMedia && (<Media hasFailed={state.mediaDownloadFailed} url={state.mediaUrl}></Media>)} */}
                     </div>
                     {m.body}
                 </div>
-                <span className={styles.time_date}>{m.state.timestamp.toLocaleString()}</span>
+                <span className="styles__time-date">{m.state.timestamp.toLocaleString()}</span>
             </div>
         </li>
-    );
+    )};
 };
 export default MessageBubble;
