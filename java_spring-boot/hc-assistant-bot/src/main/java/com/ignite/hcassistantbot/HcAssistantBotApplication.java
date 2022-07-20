@@ -1,10 +1,15 @@
 package com.ignite.hcassistantbot;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.dialogflow.v2.SessionsSettings;
 import com.twilio.Twilio;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
 
 @SpringBootApplication
 public class HcAssistantBotApplication implements CommandLineRunner {
@@ -21,5 +26,15 @@ public class HcAssistantBotApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		Twilio.init(env.getProperty("TWILIO_ACCOUNT_SID"), env.getProperty("TWILIO_AUTH_TOKEN"));
+	}
+
+	@Bean
+	public SessionsSettings buildSessionsSettings() throws Exception {
+		SessionsSettings sessionsSettings = SessionsSettings.newBuilder().setCredentialsProvider(
+				FixedCredentialsProvider.create(GoogleCredentials.fromStream(
+						new ClassPathResource("google-auth-json here").getInputStream()
+				).createScoped("https://www.googleapis.com/auth/cloud-platform"))
+		).build();
+		return sessionsSettings;
 	}
 }

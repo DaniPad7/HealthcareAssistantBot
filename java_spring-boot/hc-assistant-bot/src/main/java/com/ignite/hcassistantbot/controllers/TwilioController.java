@@ -1,20 +1,29 @@
 package com.ignite.hcassistantbot.controllers;
 
+import com.google.cloud.dialogflow.v2.DetectIntentResponse;
+import com.google.protobuf.ByteString;
+import com.ignite.hcassistantbot.services.DialogflowService;
 import com.ignite.hcassistantbot.services.TwilioService;
 import com.twilio.jwt.accesstoken.AccessToken;
 import com.twilio.jwt.accesstoken.ChatGrant;
 import com.twilio.rest.conversations.v1.Conversation;
 import com.twilio.rest.conversations.v1.conversation.Participant;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
 
 @RestController
 @RequestMapping(value = "/twilio")
 public class TwilioController {
     private final TwilioService twilioService;
+    private final DialogflowService dialogflowService;
     @Autowired
-    public TwilioController(TwilioService twilioService) {
+    public TwilioController(TwilioService twilioService, DialogflowService dialogflowService) {
+        this.dialogflowService = dialogflowService;
         this.twilioService = twilioService;
     }
     private static final String ACCOUNT_SID = System.getenv("TWILIO_ACCOUNT_SID");
@@ -32,14 +41,14 @@ public class TwilioController {
     @PostMapping(value = "/create-conversation")
     public ResponseEntity<String> createConversation() {
         Conversation conversation = Conversation.creator()
-                .setFriendlyName("My First Conversation").create();
+                .setFriendlyName("My Third Conversation").create();
         return ResponseEntity.ok().body(conversation.getSid());
     }
 
     @GetMapping(value = "/fetch-conversation")
     public ResponseEntity<String> fetchConversation() {
         Conversation conversation = Conversation
-                .fetcher(CONVERSATION_SID).fetch();
+                .fetcher("CONVERSATION_SID").fetch();
         return ResponseEntity.ok().body(conversation.getSid());
     }
     @PostMapping(value = "/create-smsparticipant")
@@ -51,12 +60,12 @@ public class TwilioController {
     }
     @PostMapping(value = "/create-chatparticipant")
     public ResponseEntity<String> createChatParticipant() {
-        Participant participant = Participant.creator(CONVERSATION_SID)
-                .setIdentity("testPineapple"/*Implement with H2 maybe*/).create();
+        Participant participant = Participant.creator("CONVERSATION_SID")
+                .setIdentity("appUser"/*Implement with H2 maybe*/).create();
         return ResponseEntity.ok().body(participant.getSid());
     }
 
-    @PostMapping(value = "/create-token")
+    @PostMapping(value = "/create-token", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> createToken(@RequestBody AppIdentity identity) {
         String name = identity.getName();
 //        Implement above identity with H2
@@ -67,16 +76,27 @@ public class TwilioController {
         return ResponseEntity.ok().body(token.toJwt());
     }
 
-//    @PostMapping(value = "/dialogflow")
-//    public ResponseEntity<String> toDialogflow(@RequestBody() AppBody appBody) {
-//        String sessionId = appBody.conversationSid;
-//        String query = appBody.query;
-//        let response = twilioService.sendToDialogflow(projectId, sessionId, query);/*will equal to something*/
-//        if (response.isNotOk) { send 500 status code}
-//
-//        let result = twilioService.sendToTwilio(response, sessionId);
-//        if (result.isOk) {send 201 status code}
-//    }
+    @PostMapping(value = "/dialogflow")
+    public ResponseEntity<String> toDialogflow(@RequestBody() String appBody) throws Exception{
+        String query = appBody;
+        DetectIntentResponse response = dialogflowService.sendToDialogflow("projectId", CONVERSATION_SID, query);
+        if (!response.getQueryResult().hasIntent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No intent found.");
+        }
+        boolean result = twilioService.sendToTwilio(response, CONVERSATION_SID);
+        if (result) { return ResponseEntity.status(HttpStatus.CREATED).body("Message created");}
+        else { return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Could not send message to Twilio");}
+    }
+
+    @PostMapping(value = "/voice-dialogflow/{channel}")
+    public void voiceToDialogflow(@RequestBody byte[] app, @PathVariable(name = "channel") String sid,
+                                  @RequestParam(name = "typeonrep") String type) throws Exception {
+        System.out.println(ByteString.copyFrom(app).toString("UTF-8"));
+        System.out.println(sid + " " + type);
+        DetectIntentResponse response = dialogflowService.sendVoiceToDialogFlow("projectId", CONVERSATION_SID, app);
+        System.out.println(response.toString());
+    }
 }
 
 class AppIdentity {

@@ -6,6 +6,10 @@ class ChatBot extends Component {
         super(props);
         console.log("In chatbot what is conversation in constructor ", props.conversationProxy);
         this.state = {
+            usingVoice: false,
+            usingCall: false,
+            onRep: false,
+            mediaRecorder: null,
             newMessage: "",
             conversationProxy: props.conversationProxy,
             messages: [],
@@ -100,12 +104,94 @@ class ChatBot extends Component {
         this.setState({ newMessage: event.target.value });
     };
 
-    sendMessage = (event) => {
+    sendMessage = async (event) => {
         event.preventDefault();
         const message = this.state.newMessage;
         this.setState({ newMessage: "" });
         console.log("This is the chatbot state at send message ", this.state);
-        this.props.conversationProxy.sendMessage(message);
+        await this.props.conversationProxy.sendMessage(message);
+        /**SEND THE M TO BOTH THE CONVERSATION AND DIALOGFLOW IN A BIT*/
+        if (!this.state.onRep) {
+            await fetch("http://localhost:8080/twilio/dialogflow", {
+            body: message, method: "POST"
+            })
+        }
+    };
+    sendAudioData = async (dataArray) => {
+        let on = this;
+        const data = dataArray[0];
+        const fileReader = new FileReader();
+        fileReader.onloadend = async function () {
+            console.log("The ArrayBuffer", this.result);
+            const dat = this.result;
+            console.log("Want to send this blob data ", dat);
+            await fetch("http://localhost:8080/twilio/voice-dialogflow/env1?typeonrep=false", {
+                method: "POST",
+                body: dat
+            });
+        }
+        fileReader.readAsArrayBuffer(data);
+    };
+    switchVoice = async (event) => {
+        event.preventDefault();
+        let audioIn = { audio: true };
+        if (!this.state.usingVoice && !this.state.mediaRecorder) {
+            console.log("Setting up voice recorder, should only happen at first click");
+            try {
+                const mediaStreamObj = await navigator.mediaDevices.getUserMedia(audioIn);
+                let mediaRecord = new MediaRecorder(mediaStreamObj, { mimeType: 'audio/webm',  });
+                let dataArray = [];
+                mediaRecord.ondataavailable = (ev) => {
+                    console.log("Pusing to the array ", ev);
+                    dataArray.push(ev.data);
+                }
+                mediaRecord.onstop = async (ev) => {
+                    let audioPlay = document.getElementById("audio-play");
+                    audioPlay.src = window.URL.createObjectURL(dataArray[0]);
+                    await this.sendAudioData(dataArray);
+                    dataArray = [];
+                }
+                mediaRecord.start();
+                this.setState({ usingVoice: !this.state.usingVoice, mediaRecorder: mediaRecord });
+            }
+            catch (err) {
+                console.error(err);
+            }
+        }
+        else if (!this.state.usingVoice && this.state.mediaRecorder) {
+            console.log("Starting voice recorder, should only happen at third click");
+            this.state.mediaRecorder.start();
+            this.setState({ usingVoice: !this.state.usingVoice });
+        }
+        else {
+            console.log("Closing voice recorder, should only happen at second click");
+            this.state.mediaRecorder.stop();
+            this.setState({ usingVoice: !this.state.usingVoice });
+        }
+    }
+    renderName = () => {
+        return (this.state.onRep) ? "Daniel" : "Alphius";
+    }
+    renderButton = () => {
+        return (this.state.onRep) ? "Disconnect" : "Connect Representative";
+    };
+    renderCall = () => {
+        if (this.state.onRep) {
+            return (this.props.conversationProxy.sid === "CH5fabf57759b648b0a675cbf3e052e277") ? (
+                <button onClick={this.sendMessage} className="chat__button btn-bottom-one" type="button" title="Call" disabled={this.state.usingVoice}>
+                    <span>
+                        <picture>
+                            <source type="image/png" srcSet="/MaskGroup21.png 1x, /MaskGroup21@2x.png 2x" />
+                            <img src="/MaskGroup21.png" alt="Call" />
+                        </picture>
+                    </span>
+                </button>
+            ) : null
+        }
+    };
+    switchChannel = () => {
+        this.setState({ onRep: !this.state.onRep });
+        this.props.onSwitchConversation();
     };
 
     render() {
@@ -196,34 +282,36 @@ class ChatBot extends Component {
                                 </g>
                             </g>
                         </svg>
-                        <p>Alphius</p>
+                        <p>{this.renderName()}</p>
                     </div>
-                    <button className="btn btn__handoff" type="button">Connect Representative</button>
+                    <button className="btn btn__handoff" type="button" onClick={this.switchChannel}>{ this.renderButton()}</button>
                 </div>
                 <div style={{ height: "35.9rem" }}>
                     <ConversationsMessages identity={this.props.myIdentity} messages={this.state.messages}></ConversationsMessages>
                 </div>
                 <div className="chat-input">
-                    <textarea className="" onChange={this.onMessageChanged} value={this.state.newMessage} placeholder="Message..." maxLength={100}></textarea>
-                    <button onClick={this.sendMessage} className="chat__button btn-bottom-one" type="button" title="Send">
+                    <textarea style={(this.state.onRep) ? {"width": "23.2rem" } : {"width": "29.8rem" }} onChange={this.onMessageChanged} value={this.state.newMessage} placeholder="Message..." maxLength={100}></textarea>
+                    <button onClick={this.sendMessage} className="chat__button btn-bottom-one" type="button" title="Send" disabled={this.state.usingVoice || this.state.usingCall}>
                         <span>
                             <picture>
                                 <source type="image/png" srcSet="/MaskGroup2.png 1x, /MaskGroup2@2x.png 2x" />
-                                <img src="/MaskGroup4.png" alt="Virtual Consulting" />
+                                <img src="/MaskGroup2.png" alt="Send" />
                             </picture>
                         </span>
                     </button>
-                    <button onClick={console.log("Clicked speech-to-text")} className="chat__button btn-bottom-two" type="button" title="Speech">
+                    {this.renderCall()}
+                    <button onClick={this.switchVoice} className={(this.state.usingVoice ? "button-voice " : "") + "chat__button btn-bottom-two"} type="button" title="Speech">
                         <span>
                             <picture>
                                 <source type="image/png" srcSet="/MaskGroup1.png 1x, /MaskGroup1@2x.png 2x" />
-                                <img src="/MaskGroup4.png" alt="Virtual Consulting" />
+                                <img src="/MaskGroup1.png" alt="Speech" />
                             </picture>
 
                         </span>
                     </button>
                 </div>
             </form>
+            <audio id="audio-play" controls></audio>
         </div>
         <div className="static">
             <svg xmlns="http://www.w3.org/2000/svg" width="253" height="127" viewBox="0 0 253 127" id="bot-svg">

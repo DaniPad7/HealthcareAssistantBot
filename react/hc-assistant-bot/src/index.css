@@ -698,6 +698,9 @@ textarea::placeholder {
 .btn-bottom-two {
   padding-left: 1rem;
 }
+.button-voice {
+  background: #C9EFC9 0% 0% no-repeat padding-box;
+}
 .chat-handoff {
   display: flex;
   justify-content: space-between;

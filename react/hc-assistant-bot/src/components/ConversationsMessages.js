@@ -8,7 +8,7 @@ class ConversationMessages extends PureComponent {
     render() { 
         return (
         <div id="messages" style={{ height: "35.9rem" }}>
-            <ul style={{ height: "35.9rem" }}>
+            <ul style={{ height: "35.9rem", overflow: "scroll" }}>
                 {console.log("WHat are the props now in render", this.props)}
                 {this.props.messages.map(m => {
                     console.log(m.author === this.props.identity, m);

@@ -1,31 +1,23 @@
 package com.ignite.hcassistantbot.services;
 
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.auth.Credentials;
-import com.google.cloud.dialogflow.v2.*;
+
+import com.google.cloud.dialogflow.v2.DetectIntentResponse;
 import com.twilio.rest.conversations.v1.conversation.Message;
 import com.twilio.rest.conversations.v1.conversation.MessageCreator;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TwilioService {
 
-    public void sendToDialogflow(String projectId, String sessionId, String query) throws Exception {
-//        SessionsSettings sessionsSettings = SessionsSettings.newBuilder().setCredentialsProvider(
-//                FixedCredentialsProvider.create()
-//        ) Look into adding the google auth as an environment variable here
-        try (SessionsClient sessionsClient = SessionsClient.create()) {
-            SessionName session = SessionName.ofProjectSessionName("ProjectId", "SessionId");
-            QueryInput queryInput = QueryInput.newBuilder().build();
-            DetectIntentResponse response = sessionsClient.detectIntent(session, queryInput);
-            /*Continue implementing logic from here*/
+    public boolean sendToTwilio(DetectIntentResponse response, String conversationSid) {
+        try {
+            MessageCreator messageCreator = Message.creator(conversationSid);
+            messageCreator.setAuthor("system1")
+                    .setBody(response.getQueryResult().getFulfillmentText()).create();
+            return true;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return false;
         }
-    }
-
-    public void sendToTwilio(String response, String conversationSid) {
-        MessageCreator messageCreator = Message.creator("CONVERSATION_SID");
-        messageCreator.setAuthor("system").setBody(response).create(); /*response will change*/
-
     }
 }

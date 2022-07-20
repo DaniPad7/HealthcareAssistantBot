@@ -31,7 +31,7 @@ class App extends Component {
       this.getToken(this.state.name)
     }
     else {
-      this.getToken("testPineapple")
+      this.getToken("appUser")
     }
   };
 
@@ -46,13 +46,20 @@ class App extends Component {
    };
   logout = (event) => { };
   getToken = async (name) => {
-    // const response = await fetch("http://localhost:8080/twilio/create-token", {
-    //   body: name, method: "POST"
-    // });
-    // const myToken = response; /**Manipulate response */
+    const payload = { name };
+
+    const response = await fetch("http://localhost:8080/twilio/create-token1", {
+      body: JSON.stringify(payload), method: "POST"
+      , headers: { 'Content-Type': 'application/json' }
+    });
+    console.log("Here ", response);
+    const myTokenR = response.body.getReader();
+    const tok = await myTokenR.read();
+    const myToken = new TextDecoder("utf-8").decode(tok.value);
+    await myTokenR.cancel();
     // Maybe don't use setState but await a token and pass it as a param to initConversations.
-    const myToken = "INSERT TOKEN";
-    console.log(myToken);
+    // const myToken = "INSERT TOKEN HERE";
+    console.log("Hello ", myToken);
     await this.initConversations(myToken);
   };
 
@@ -90,19 +97,30 @@ class App extends Component {
       }
     });
     this.conversationsClient.on("conversationJoined", (conversation) => {
-      console.log("Setting conversation joined");
-      this.setState({ conversations: [...this.state.conversations, conversation] });
+      // the first event does not have setState called
+      console.log("Setting conversation joined with this ", conversation);
+      // this.setState({ conversations: [...this.state.conversations, conversation] });
     });
-    this.conversationsClient.on("conversationLeft", (thisConversation) => {
-      console.log("Setting conversation left");
-      this.setState({ conversations: [...this.state.conversations.filter(it => it !== thisConversation)] });
+    this.conversationsClient.onWithReplay("conversationLeft", (thisConversation) => {
+      console.log("Setting conversation left with this ", thisConversation);
+      // this.setState({ conversations: [...this.state.conversations.filter(it => it !== thisConversation)] });
     });
+    /*const look = await this.conversationsClient.getSubscribedConversations();
+    console.log("Looking ", look.items);
+    this.setState({ conversations: [...this.state.conversations, ...look.items] });*/
   };
+
   // selectedConversationSid must be put to a default of only one conversation.
+  switchConversation = () => {
+    this.setState({ selectedConversationSid: 
+      this.state.selectedConversationSid === ".env1" ?
+      ".env2" : ".env1" });
+  };
   
   render() {
     const { conversations, selectedConversationSid } = this.state;
     const selectedConversation = conversations.find(it => it.sid === selectedConversationSid);
+    console.log("Conversations to choose from ", this.state.conversations);
     console.log("Slected conversation ", selectedConversation);
     return (
     <>
@@ -115,7 +133,7 @@ class App extends Component {
             <Route path="/" exact element={<Home></Home>}></Route>
           </Routes>
         </div>
-        <ChatBot conversationProxy={selectedConversation} myIdentity={"testPineapple"/**temp */}></ChatBot>
+        <ChatBot onSwitchConversation={this.switchConversation} conversationProxy={selectedConversation} myIdentity={"appUser"/**temp */}></ChatBot>
       </BrowserRouter>
     </>
   )};

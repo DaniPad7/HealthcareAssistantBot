@@ -40,6 +40,13 @@
 			<artifactId>google-cloud-dialogflow</artifactId>
 			<version>4.7.1</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.auth/google-auth-library-oauth2-http -->
+		<dependency>
+			<groupId>com.google.auth</groupId>
+			<artifactId>google-auth-library-oauth2-http</artifactId>
+			<version>1.8.1</version>
+		</dependency>
+
 
 
 		<dependency>
