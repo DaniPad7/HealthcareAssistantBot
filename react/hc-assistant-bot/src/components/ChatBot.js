@@ -177,7 +177,7 @@ class ChatBot extends Component {
     };
     renderCall = () => {
         if (this.state.onRep) {
-            return (this.props.conversationProxy.sid === "CH5fabf57759b648b0a675cbf3e052e277") ? (
+            return (this.props.conversationProxy.sid === "") ? (
                 <button onClick={this.sendMessage} className="chat__button btn-bottom-one" type="button" title="Call" disabled={this.state.usingVoice}>
                     <span>
                         <picture>
