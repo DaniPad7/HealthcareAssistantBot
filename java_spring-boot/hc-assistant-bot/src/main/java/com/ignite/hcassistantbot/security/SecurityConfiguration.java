@@ -2,6 +2,7 @@ package com.ignite.hcassistantbot.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,7 +22,6 @@ public class SecurityConfiguration {
         http.cors();
         http.csrf().disable()
             .authorizeHttpRequests((authZ) -> authZ.anyRequest().permitAll());
-//                .httpBasic(Customizer.withDefaults());
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         return http.build();
     }
@@ -29,9 +29,7 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(
-                Collections.unmodifiableList(Arrays.asList("http://localhost:3000"))
-        );
+        corsConfiguration.addAllowedOriginPattern("*");
         corsConfiguration.setAllowedMethods(
                 Collections.unmodifiableList(Arrays.asList("GET", "POST", "OPTIONS"))
         );

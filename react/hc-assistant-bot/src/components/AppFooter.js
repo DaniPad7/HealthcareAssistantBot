@@ -1,11 +1,5 @@
 const AppFooter = () => {
     return (
-        // <section className="block block--footer">
-        //     <ul className="list">
-            
-        // </ul>
-
-        // </section>
         <section className="block block--footer">
             <div className="footer-container">
                 <nav className="nav__footer">

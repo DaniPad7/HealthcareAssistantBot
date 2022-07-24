@@ -1,4 +1,13 @@
+import { useEffect } from "react";
+
 const FAQBlock = () => {
+    useEffect(() => {
+        if (window.location.hash) {
+            let a = document.createElement("a");
+            a.setAttribute("href", "#contact-us");
+            a.click();
+        }
+    });
     return (
         <section className="block--faq">
             <div className="faq-container">
@@ -145,7 +154,7 @@ const FAQBlock = () => {
                         </li>
                     </ul>
                 </div>
-                <div className="faq__contact-us">
+                <div id="contact-us" className="faq__contact-us">
                     <p className="block__heading faq__title-two">We'd love to hear from you</p>
                     <form>
                         <div className="media-container">
@@ -162,7 +171,6 @@ const FAQBlock = () => {
             </div>
         </section>
     );
-
 };
 
 export default FAQBlock;

@@ -1,15 +1,16 @@
-import { Component, useEffect, useState } from "react";
+import { Component } from "react";
 import ConversationsMessages from "./ConversationsMessages";
+import {Device} from "@twilio/voice-sdk";
 
 class ChatBot extends Component {
     constructor(props) {
         super(props);
-        console.log("In chatbot what is conversation in constructor ", props.conversationProxy);
         this.state = {
             usingVoice: false,
             usingCall: false,
             onRep: false,
             mediaRecorder: null,
+            device: null,
             newMessage: "",
             conversationProxy: props.conversationProxy,
             messages: [],
@@ -19,13 +20,10 @@ class ChatBot extends Component {
     }
     loadMessagesFor = async (thisConversation) => {
         if (this.props.conversationProxy.sid === thisConversation.sid) {
-            console.log("Getting the messages for this conversation");
             try {
                 const messagePaginator = await thisConversation.getMessages();
                 if (this.props.conversationProxy === thisConversation && (this.state.messages.length !== messagePaginator.items.length)) {
-                    console.log("Changing the state message prop ", messagePaginator);
                     this.setState({ messages: messagePaginator.items, loadingState: "ready" });
-                    console.log("State again: ", this.state);
                 }
             } catch (err) {
                 console.error("Could not fetch messages Implement Retry", err);
@@ -50,25 +48,23 @@ class ChatBot extends Component {
         document.getElementById("chat-header-close-btn").addEventListener('click', () => {
             closeForm();
         });
+        this.getCallToken();
         
         if (this.state.conversationProxy) {
             this.loadMessagesFor(this.state.conversationProxy);
             if (!this.state.boundConversations.has(this.state.conversationProxy)) {
                 let newConversation = this.state.conversationProxy;
-                console.log("New Conversation in Chatbot ", newConversation);
                 newConversation.on("messageAdded", m => this.messageAdded(m, newConversation));
                 this.setState({ boundConversations: new Set([...this.state.boundConversations, newConversation]) });
             }
         }
     };
     componentDidUpdate = (prevProps, prevState) => {
-        console.log("Run didUpdate and here are the prev state ",prevState, this.props.conversationProxy);
         if (this.state.conversationProxy !== this.props.conversationProxy) {
             
             this.loadMessagesFor(this.props.conversationProxy);
             if (!this.state.boundConversations.has(this.props.conversationProxy)) {
                 let newConversation = this.props.conversationProxy;
-                console.log("New Conversation in Chatbot ", newConversation);
                 newConversation.on("messageAdded", m => this.messageAdded(m, newConversation));
                 this.setState({ boundConversations: new Set([...this.state.boundConversations, newConversation]) });
             }
@@ -89,15 +85,10 @@ class ChatBot extends Component {
         document.getElementById("chat-header-close-btn").removeEventListener("click", () => {closeForm()});
     }
 
-    // static getDerivedStateFromProps
-
     
     messageAdded = (message, targetConversation) => {
-        console.log("Here si the message and useState might not work again ", message);
         if (targetConversation === this.props.conversationProxy) {
-            console.log("Setting the new messages state");
             this.setState((prevState, props) => ({ messages: [...prevState.messages, message] }));
-            console.log("State ", this.state);
         }
     };
     onMessageChanged = (event) => {
@@ -108,24 +99,36 @@ class ChatBot extends Component {
         event.preventDefault();
         const message = this.state.newMessage;
         this.setState({ newMessage: "" });
-        console.log("This is the chatbot state at send message ", this.state);
         await this.props.conversationProxy.sendMessage(message);
-        /**SEND THE M TO BOTH THE CONVERSATION AND DIALOGFLOW IN A BIT*/
         if (!this.state.onRep) {
-            await fetch("http://localhost:8080/twilio/dialogflow", {
+            await fetch("/nlu/text/dialogflow", {
             body: message, method: "POST"
             })
         }
     };
+    getCallToken = async () => {
+        const response = await fetch("/twilio/create/token/call",
+        { method: "POST", headers: { "Content-Type": "application/json "} });
+        const tokenR = response.body.getReader();
+        const tok = await tokenR.read();
+        const token = new TextDecoder("utf-8").decode(tok.value);
+        await tokenR.cancel();
+        const device = new Device(token);
+        this.initDevice(device);
+    };
+    initDevice = (device) => {
+        device.on("error", (err) => {
+            console.error(err);
+        });
+        this.setState({ device });
+    }
     sendAudioData = async (dataArray) => {
         let on = this;
         const data = dataArray[0];
         const fileReader = new FileReader();
         fileReader.onloadend = async function () {
-            console.log("The ArrayBuffer", this.result);
             const dat = this.result;
-            console.log("Want to send this blob data ", dat);
-            await fetch("http://localhost:8080/twilio/voice-dialogflow/env1?typeonrep=false", {
+            await fetch(`/nlu/voice/dialogflow/${on.props.conversationProxy.sid}?typeonrep=${on.state.onRep}&author=${on.props.myIdentity}`, {
                 method: "POST",
                 body: dat
             });
@@ -136,18 +139,14 @@ class ChatBot extends Component {
         event.preventDefault();
         let audioIn = { audio: true };
         if (!this.state.usingVoice && !this.state.mediaRecorder) {
-            console.log("Setting up voice recorder, should only happen at first click");
             try {
                 const mediaStreamObj = await navigator.mediaDevices.getUserMedia(audioIn);
                 let mediaRecord = new MediaRecorder(mediaStreamObj, { mimeType: 'audio/webm',  });
                 let dataArray = [];
                 mediaRecord.ondataavailable = (ev) => {
-                    console.log("Pusing to the array ", ev);
                     dataArray.push(ev.data);
                 }
                 mediaRecord.onstop = async (ev) => {
-                    let audioPlay = document.getElementById("audio-play");
-                    audioPlay.src = window.URL.createObjectURL(dataArray[0]);
                     await this.sendAudioData(dataArray);
                     dataArray = [];
                 }
@@ -159,39 +158,94 @@ class ChatBot extends Component {
             }
         }
         else if (!this.state.usingVoice && this.state.mediaRecorder) {
-            console.log("Starting voice recorder, should only happen at third click");
             this.state.mediaRecorder.start();
             this.setState({ usingVoice: !this.state.usingVoice });
         }
         else {
-            console.log("Closing voice recorder, should only happen at second click");
             this.state.mediaRecorder.stop();
             this.setState({ usingVoice: !this.state.usingVoice });
         }
     }
+    callRep = () => {
+        if (!this.state.usingCall && this.state.device) {
+            this.state.device.connect();
+            this.setState({ usingCall: true });
+        }
+        else if (this.state.usingCall && this.state.device) {
+            this.state.device.disconnectAll();
+            this.setState({ usingCall: false });
+        }
+    };
+
     renderName = () => {
-        return (this.state.onRep) ? "Daniel" : "Alphius";
+        return (this.state.onRep) ? "Representative" : "Alphius";
     }
     renderButton = () => {
         return (this.state.onRep) ? "Disconnect" : "Connect Representative";
     };
     renderCall = () => {
-        if (this.state.onRep) {
-            return (this.props.conversationProxy.sid === "") ? (
-                <button onClick={this.sendMessage} className="chat__button btn-bottom-one" type="button" title="Call" disabled={this.state.usingVoice}>
+        return (this.state.onRep) ? (
+                <button onClick={this.callRep} className={(this.state.usingCall ? "button-voice " : "") + "chat__button btn-bottom-one"} type="button" title="Call" disabled={this.state.usingVoice}>
                     <span>
                         <picture>
                             <source type="image/png" srcSet="/MaskGroup21.png 1x, /MaskGroup21@2x.png 2x" />
                             <img src="/MaskGroup21.png" alt="Call" />
                         </picture>
                     </span>
-                </button>
-            ) : null
-        }
+                </button>) : null
     };
     switchChannel = () => {
         this.setState({ onRep: !this.state.onRep });
         this.props.onSwitchConversation();
+    };
+    renderAssistant = () => {
+        return (!this.state.onRep) ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="33.763" height="32.473" viewBox="0 0 33.763 32.473">
+                            <g id="bot" transform="translate(-113.303 -150.148)">
+                                <g id="Group_16" data-name="Group 16" transform="translate(113.303 150.148)">
+                                    <path id="Path_24" data-name="Path 24" d="M171.978,299.123a5.32,5.32,0,0,1-1.118-1.637,5.1,5.1,0,0,1,3.535-7.056,4.845,4.845,0,0,1,1.312-.143A8.955,8.955,0,0,1,171.978,299.123Z" transform="translate(-167.118 -280.021)" fill="#60bbea" />
+                                    <path id="Path_25" data-name="Path 25" d="M174.918,299.123a5.319,5.319,0,0,1-1.118-1.637c.6-1.04,1.2-2.144,1.78-3.314.65-1.286,1.235-2.547,1.741-3.743a4.845,4.845,0,0,1,1.313-.143C177.4,293.211,176.165,296.174,174.918,299.123Z" transform="translate(-170.057 -280.021)" fill="#5faddd" />
+                                    <path id="Path_26" data-name="Path 26" d="M209.377,266.815c-.52,7.29-17.231,9.694-25.054,5.289a7.006,7.006,0,0,1-3.911-5.289c-1.2-10.656,5.861-20.415,13.957-20.415a14.438,14.438,0,0,1,9.252,3.613C207.271,253.209,209.961,258.641,209.377,266.815Z" transform="translate(-175.694 -241.839)" fill="#60bbea" />
+                                    <path id="Path_27" data-name="Path 27" d="M152.944,242.884a7.5,7.5,0,0,1-2.573-2.6c-1.014-1.65-1.949-4.509-.663-8.785l.754.221c-.962,3.184-.767,5.913.559,8.109a6.737,6.737,0,0,0,2.3,2.352Z" transform="translate(-148.551 -228.875)" fill="#60bbea" />
+                                    <circle id="Ellipse_30" data-name="Ellipse 30" cx="1.832" cy="1.832" r="1.832" transform="translate(0)" fill="#2a5082" />
+                                    <path id="Path_28" data-name="Path 28" d="M231.244,315.631c0,1.468-1.611,2.365-3.678,2.9a27.955,27.955,0,0,1-6.744.7c-2.69-.026-7.862-.494-9.733-2.2a1.878,1.878,0,0,1-.689-1.4,5.645,5.645,0,0,1,1.728-4.054A5.961,5.961,0,0,1,216.3,309.9h9.057a5.927,5.927,0,0,1,4.652,2.222A5.545,5.545,0,0,1,231.244,315.631Z" transform="translate(-201.901 -297.087)" fill="#2a5082" />
+                                    <path id="Path_29" data-name="Path 29" d="M235.855,330.422c0,1.468-1.611,2.365-3.678,2.9a27.956,27.956,0,0,1-6.744.7c-2.69-.026-7.862-.494-9.733-2.2,5.315-.156,14.359-1.027,18.921-4.925A5.608,5.608,0,0,1,235.855,330.422Z" transform="translate(-206.513 -311.878)" fill="#34497b" />
+                                    <path id="Path_30" data-name="Path 30" d="M252.547,400a6.334,6.334,0,0,1-4.028-1.39c-1.741-1.4-2.287-3.392-1.728-3.431.871-.065,2.937.975,5.276.975,2.677,0,4.509-.676,5.887-.728h.182C259.538,395.414,257.823,400,252.547,400Z" transform="translate(-233.379 -371.283)" fill="#2a5082" />
+                                    <path id="Path_31" data-name="Path 31" d="M236.454,291c-.52,7.29-17.231,9.694-25.054,5.289,4.782.793,19,2.534,21.546-4.314,2.2-5.887-.52-13.749-2.261-17.777C234.349,277.4,237.039,282.829,236.454,291Z" transform="translate(-202.771 -266.026)" fill="#5faddd" />
+                                    <path id="Path_32" data-name="Path 32" d="M216.365,262.032c.429.572,3.093-.624,4.873-1.936,1.715-1.261,3.457-3.236,3.067-3.807-.338-.494-2.3.208-3.535.871C218.015,258.627,215.9,261.408,216.365,262.032Z" transform="translate(-207.034 -250.297)" fill="#b6e2e6" />
+                                    <path id="Path_33" data-name="Path 33" d="M186.983,371.064c.065,1.949,1.247,3.794,1.728,3.665.507-.13.3-2.456.065-3.73-.065-.364-.481-2.612-1-2.6C187.373,368.4,186.944,369.8,186.983,371.064Z" transform="translate(-181.526 -347.985)" fill="#b6e2e6" />
+                                    <g id="Group_13" data-name="Group 13" transform="translate(21.779 14.216)">
+                                        <g id="Group_12" data-name="Group 12">
+                                            <path id="Path_34" data-name="Path 34" d="M321.276,326.925a2.642,2.642,0,0,1-5.107.949,2.492,2.492,0,0,1-.169-.936,2.636,2.636,0,0,1,5.042-1.079A2.565,2.565,0,0,1,321.276,326.925Z" transform="translate(-315.558 -323.832)" fill="#393861" />
+                                            <path id="Path_35" data-name="Path 35" d="M315.68,321.155a2.638,2.638,0,0,1,2.4,1.559,2.673,2.673,0,0,1,.234,1.079,2.642,2.642,0,0,1-5.107.949,2.491,2.491,0,0,1-.169-.936,2.643,2.643,0,0,1,2.638-2.651Zm0-.455a3.086,3.086,0,0,0-3.08,3.08,2.926,2.926,0,0,0,.208,1.1,3.083,3.083,0,0,0,5.965-1.092,2.971,2.971,0,0,0-.273-1.26,3.09,3.09,0,0,0-2.82-1.832Z" transform="translate(-312.6 -320.7)" fill="#47aed2" />
+                                        </g>
+                                        <path id="Path_36" data-name="Path 36" d="M321.042,325.746c-.988,2.378-3.418,2.313-4.86,2.027a2.786,2.786,0,0,1-.182-.936,2.639,2.639,0,0,1,5.042-1.092Z" transform="translate(-315.558 -323.745)" fill="#304673" />
+                                        <circle id="Ellipse_31" data-name="Ellipse 31" cx="0.871" cy="0.871" r="0.871" transform="translate(1.222 1.351)" fill="#b6e2e6" />
+                                        <path id="Path_37" data-name="Path 37" d="M338.364,348.349c.143.091-.052,1.014-.7,1.364-.585.312-1.352.078-1.365-.091-.013-.13.39-.156,1.053-.559C338.052,348.648,338.26,348.284,338.364,348.349Z" transform="translate(-333.218 -344.75)" fill="#b6e2e6" />
+                                    </g>
+                                    <g id="Group_15" data-name="Group 15" transform="translate(10.097 14.216)">
+                                        <g id="Group_14" data-name="Group 14">
+                                            <path id="Path_38" data-name="Path 38" d="M231.276,326.925a2.642,2.642,0,0,1-5.107.949,2.492,2.492,0,0,1-.169-.936,2.636,2.636,0,0,1,5.042-1.079A2.377,2.377,0,0,1,231.276,326.925Z" transform="translate(-225.571 -323.832)" fill="#393861" />
+                                            <path id="Path_39" data-name="Path 39" d="M225.78,321.155a2.638,2.638,0,0,1,2.4,1.559,2.673,2.673,0,0,1,.234,1.079,2.642,2.642,0,0,1-5.107.949,2.492,2.492,0,0,1-.169-.936,2.634,2.634,0,0,1,2.638-2.651Zm0-.455a3.086,3.086,0,0,0-3.08,3.08,2.926,2.926,0,0,0,.208,1.1,3.083,3.083,0,0,0,5.965-1.092,2.971,2.971,0,0,0-.273-1.26,3.1,3.1,0,0,0-2.82-1.832Z" transform="translate(-222.7 -320.7)" fill="#47aed2" />
+                                        </g>
+                                        <path id="Path_40" data-name="Path 40" d="M231.042,325.746c-.988,2.378-3.418,2.313-4.86,2.027a2.785,2.785,0,0,1-.182-.936,2.64,2.64,0,0,1,5.042-1.092Z" transform="translate(-225.571 -323.745)" fill="#304673" />
+                                        <circle id="Ellipse_32" data-name="Ellipse 32" cx="0.871" cy="0.871" r="0.871" transform="translate(1.209 1.338)" fill="#b6e2e6" />
+                                        <path id="Path_41" data-name="Path 41" d="M248.464,348.349c.143.091-.052,1.014-.7,1.364-.585.312-1.351.078-1.364-.091-.013-.13.39-.156,1.053-.559C248.139,348.648,248.36,348.284,248.464,348.349Z" transform="translate(-243.318 -344.75)" fill="#b6e2e6" />
+                                    </g>
+                                    <path id="Path_42" data-name="Path 42" d="M255.271,313.727a4.549,4.549,0,0,1-2.391.7c-1.988.182-3.807-.442-3.781-.663a20.492,20.492,0,0,1,3.781-.13C254.907,313.61,255.258,313.636,255.271,313.727Z" transform="translate(-235.57 -300.329)" fill="#336bb4" />
+                                    <circle id="Ellipse_33" data-name="Ellipse 33" cx="0.988" cy="0.988" r="0.988" transform="translate(0.329 0.705) rotate(-18.089)" fill="#336bb4" />
+                                    <path id="Path_43" data-name="Path 43" d="M265.528,401.587a6.333,6.333,0,0,1-4.028-1.39c2.339-.312,6.913-1.144,9.421-3.2h.182C272.52,397,270.8,401.587,265.528,401.587Z" transform="translate(-246.361 -372.868)" fill="#34497b" />
+                                </g>
+                            </g>
+                        </svg>
+        ) : (
+            <span>
+                <picture>
+                    <source />
+                        <img id="rep__img" src="https://picsum.photos/32" alt="Assistant" />
+                </picture>
+            </span>
+        );
     };
 
     render() {
@@ -231,7 +285,7 @@ class ChatBot extends Component {
                         </span>
                     </button>
                     <p className="chat__heading">Chatbot</p>
-                    <button className="chat__button" type="button" title="Close" id="chat-header-close-btn">
+                    <button className="chat__button" type="button" title="Close" id="chat-header-close-btn" disabled={this.state.usingCall || this.state.usingVoice}>
                         <span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="29.25" height="29.25" viewBox="0 0 29.25 29.25">
                                 <g id="Icon_ionic-ios-close-circle-outline" data-name="Icon ionic-ios-close-circle-outline" transform="translate(-3.375 -3.375)">
@@ -244,47 +298,10 @@ class ChatBot extends Component {
                 </div>
                 <div className="chat-handoff">
                     <div className="media-flex-alignitems-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="33.763" height="32.473" viewBox="0 0 33.763 32.473">
-                            <g id="bot" transform="translate(-113.303 -150.148)">
-                                <g id="Group_16" data-name="Group 16" transform="translate(113.303 150.148)">
-                                    <path id="Path_24" data-name="Path 24" d="M171.978,299.123a5.32,5.32,0,0,1-1.118-1.637,5.1,5.1,0,0,1,3.535-7.056,4.845,4.845,0,0,1,1.312-.143A8.955,8.955,0,0,1,171.978,299.123Z" transform="translate(-167.118 -280.021)" fill="#60bbea" />
-                                    <path id="Path_25" data-name="Path 25" d="M174.918,299.123a5.319,5.319,0,0,1-1.118-1.637c.6-1.04,1.2-2.144,1.78-3.314.65-1.286,1.235-2.547,1.741-3.743a4.845,4.845,0,0,1,1.313-.143C177.4,293.211,176.165,296.174,174.918,299.123Z" transform="translate(-170.057 -280.021)" fill="#5faddd" />
-                                    <path id="Path_26" data-name="Path 26" d="M209.377,266.815c-.52,7.29-17.231,9.694-25.054,5.289a7.006,7.006,0,0,1-3.911-5.289c-1.2-10.656,5.861-20.415,13.957-20.415a14.438,14.438,0,0,1,9.252,3.613C207.271,253.209,209.961,258.641,209.377,266.815Z" transform="translate(-175.694 -241.839)" fill="#60bbea" />
-                                    <path id="Path_27" data-name="Path 27" d="M152.944,242.884a7.5,7.5,0,0,1-2.573-2.6c-1.014-1.65-1.949-4.509-.663-8.785l.754.221c-.962,3.184-.767,5.913.559,8.109a6.737,6.737,0,0,0,2.3,2.352Z" transform="translate(-148.551 -228.875)" fill="#60bbea" />
-                                    <circle id="Ellipse_30" data-name="Ellipse 30" cx="1.832" cy="1.832" r="1.832" transform="translate(0)" fill="#2a5082" />
-                                    <path id="Path_28" data-name="Path 28" d="M231.244,315.631c0,1.468-1.611,2.365-3.678,2.9a27.955,27.955,0,0,1-6.744.7c-2.69-.026-7.862-.494-9.733-2.2a1.878,1.878,0,0,1-.689-1.4,5.645,5.645,0,0,1,1.728-4.054A5.961,5.961,0,0,1,216.3,309.9h9.057a5.927,5.927,0,0,1,4.652,2.222A5.545,5.545,0,0,1,231.244,315.631Z" transform="translate(-201.901 -297.087)" fill="#2a5082" />
-                                    <path id="Path_29" data-name="Path 29" d="M235.855,330.422c0,1.468-1.611,2.365-3.678,2.9a27.956,27.956,0,0,1-6.744.7c-2.69-.026-7.862-.494-9.733-2.2,5.315-.156,14.359-1.027,18.921-4.925A5.608,5.608,0,0,1,235.855,330.422Z" transform="translate(-206.513 -311.878)" fill="#34497b" />
-                                    <path id="Path_30" data-name="Path 30" d="M252.547,400a6.334,6.334,0,0,1-4.028-1.39c-1.741-1.4-2.287-3.392-1.728-3.431.871-.065,2.937.975,5.276.975,2.677,0,4.509-.676,5.887-.728h.182C259.538,395.414,257.823,400,252.547,400Z" transform="translate(-233.379 -371.283)" fill="#2a5082" />
-                                    <path id="Path_31" data-name="Path 31" d="M236.454,291c-.52,7.29-17.231,9.694-25.054,5.289,4.782.793,19,2.534,21.546-4.314,2.2-5.887-.52-13.749-2.261-17.777C234.349,277.4,237.039,282.829,236.454,291Z" transform="translate(-202.771 -266.026)" fill="#5faddd" />
-                                    <path id="Path_32" data-name="Path 32" d="M216.365,262.032c.429.572,3.093-.624,4.873-1.936,1.715-1.261,3.457-3.236,3.067-3.807-.338-.494-2.3.208-3.535.871C218.015,258.627,215.9,261.408,216.365,262.032Z" transform="translate(-207.034 -250.297)" fill="#b6e2e6" />
-                                    <path id="Path_33" data-name="Path 33" d="M186.983,371.064c.065,1.949,1.247,3.794,1.728,3.665.507-.13.3-2.456.065-3.73-.065-.364-.481-2.612-1-2.6C187.373,368.4,186.944,369.8,186.983,371.064Z" transform="translate(-181.526 -347.985)" fill="#b6e2e6" />
-                                    <g id="Group_13" data-name="Group 13" transform="translate(21.779 14.216)">
-                                        <g id="Group_12" data-name="Group 12">
-                                            <path id="Path_34" data-name="Path 34" d="M321.276,326.925a2.642,2.642,0,0,1-5.107.949,2.492,2.492,0,0,1-.169-.936,2.636,2.636,0,0,1,5.042-1.079A2.565,2.565,0,0,1,321.276,326.925Z" transform="translate(-315.558 -323.832)" fill="#393861" />
-                                            <path id="Path_35" data-name="Path 35" d="M315.68,321.155a2.638,2.638,0,0,1,2.4,1.559,2.673,2.673,0,0,1,.234,1.079,2.642,2.642,0,0,1-5.107.949,2.491,2.491,0,0,1-.169-.936,2.643,2.643,0,0,1,2.638-2.651Zm0-.455a3.086,3.086,0,0,0-3.08,3.08,2.926,2.926,0,0,0,.208,1.1,3.083,3.083,0,0,0,5.965-1.092,2.971,2.971,0,0,0-.273-1.26,3.09,3.09,0,0,0-2.82-1.832Z" transform="translate(-312.6 -320.7)" fill="#47aed2" />
-                                        </g>
-                                        <path id="Path_36" data-name="Path 36" d="M321.042,325.746c-.988,2.378-3.418,2.313-4.86,2.027a2.786,2.786,0,0,1-.182-.936,2.639,2.639,0,0,1,5.042-1.092Z" transform="translate(-315.558 -323.745)" fill="#304673" />
-                                        <circle id="Ellipse_31" data-name="Ellipse 31" cx="0.871" cy="0.871" r="0.871" transform="translate(1.222 1.351)" fill="#b6e2e6" />
-                                        <path id="Path_37" data-name="Path 37" d="M338.364,348.349c.143.091-.052,1.014-.7,1.364-.585.312-1.352.078-1.365-.091-.013-.13.39-.156,1.053-.559C338.052,348.648,338.26,348.284,338.364,348.349Z" transform="translate(-333.218 -344.75)" fill="#b6e2e6" />
-                                    </g>
-                                    <g id="Group_15" data-name="Group 15" transform="translate(10.097 14.216)">
-                                        <g id="Group_14" data-name="Group 14">
-                                            <path id="Path_38" data-name="Path 38" d="M231.276,326.925a2.642,2.642,0,0,1-5.107.949,2.492,2.492,0,0,1-.169-.936,2.636,2.636,0,0,1,5.042-1.079A2.377,2.377,0,0,1,231.276,326.925Z" transform="translate(-225.571 -323.832)" fill="#393861" />
-                                            <path id="Path_39" data-name="Path 39" d="M225.78,321.155a2.638,2.638,0,0,1,2.4,1.559,2.673,2.673,0,0,1,.234,1.079,2.642,2.642,0,0,1-5.107.949,2.492,2.492,0,0,1-.169-.936,2.634,2.634,0,0,1,2.638-2.651Zm0-.455a3.086,3.086,0,0,0-3.08,3.08,2.926,2.926,0,0,0,.208,1.1,3.083,3.083,0,0,0,5.965-1.092,2.971,2.971,0,0,0-.273-1.26,3.1,3.1,0,0,0-2.82-1.832Z" transform="translate(-222.7 -320.7)" fill="#47aed2" />
-                                        </g>
-                                        <path id="Path_40" data-name="Path 40" d="M231.042,325.746c-.988,2.378-3.418,2.313-4.86,2.027a2.785,2.785,0,0,1-.182-.936,2.64,2.64,0,0,1,5.042-1.092Z" transform="translate(-225.571 -323.745)" fill="#304673" />
-                                        <circle id="Ellipse_32" data-name="Ellipse 32" cx="0.871" cy="0.871" r="0.871" transform="translate(1.209 1.338)" fill="#b6e2e6" />
-                                        <path id="Path_41" data-name="Path 41" d="M248.464,348.349c.143.091-.052,1.014-.7,1.364-.585.312-1.351.078-1.364-.091-.013-.13.39-.156,1.053-.559C248.139,348.648,248.36,348.284,248.464,348.349Z" transform="translate(-243.318 -344.75)" fill="#b6e2e6" />
-                                    </g>
-                                    <path id="Path_42" data-name="Path 42" d="M255.271,313.727a4.549,4.549,0,0,1-2.391.7c-1.988.182-3.807-.442-3.781-.663a20.492,20.492,0,0,1,3.781-.13C254.907,313.61,255.258,313.636,255.271,313.727Z" transform="translate(-235.57 -300.329)" fill="#336bb4" />
-                                    <circle id="Ellipse_33" data-name="Ellipse 33" cx="0.988" cy="0.988" r="0.988" transform="translate(0.329 0.705) rotate(-18.089)" fill="#336bb4" />
-                                    <path id="Path_43" data-name="Path 43" d="M265.528,401.587a6.333,6.333,0,0,1-4.028-1.39c2.339-.312,6.913-1.144,9.421-3.2h.182C272.52,397,270.8,401.587,265.528,401.587Z" transform="translate(-246.361 -372.868)" fill="#34497b" />
-                                </g>
-                            </g>
-                        </svg>
+                        {this.renderAssistant()}
                         <p>{this.renderName()}</p>
                     </div>
-                    <button className="btn btn__handoff" type="button" onClick={this.switchChannel}>{ this.renderButton()}</button>
+                    <button className="btn btn__handoff" type="button" onClick={this.switchChannel} disabled={this.state.usingCall || this.state.usingVoice}>{ this.renderButton()} </button>
                 </div>
                 <div style={{ height: "35.9rem" }}>
                     <ConversationsMessages identity={this.props.myIdentity} messages={this.state.messages}></ConversationsMessages>
@@ -311,7 +328,6 @@ class ChatBot extends Component {
                     </button>
                 </div>
             </form>
-            <audio id="audio-play" controls></audio>
         </div>
         <div className="static">
             <svg xmlns="http://www.w3.org/2000/svg" width="253" height="127" viewBox="0 0 253 127" id="bot-svg">

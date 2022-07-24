@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
 
 const NavBar = () => {
+    const renderLinkOrAnchor = () => {
+        return (window.location.pathname === "/faq") ? (
+            <a href="#contact-us">Contact Us</a>
+        ) : (<Link to={"/faq#contact-us"}>Contact Us</Link>);
+    };
     return (
         <div className="nav-attachment-container">
             <div className="nav__blur box"></div>
@@ -21,7 +26,7 @@ const NavBar = () => {
                     <li className="nav__item"><Link to={"/"}>Home</Link></li>
                     <li className="nav__item"><Link to={"/login"}>Login</Link></li>
                     <li className="nav__item"><Link to={"/signup"}>Sign Up</Link></li>
-                    <li className="nav__item"><Link to={"/faq"}>Contact Us</Link></li>
+                    <li className="nav__item">{renderLinkOrAnchor()}</li>
                     <li className="nav__item"><Link to={"/faq"}>FAQ</Link></li>
                 </ul>
             </nav>

@@ -1,10 +1,9 @@
-import { Component, useEffect, useState } from "react";
+import { Component } from "react";
 import ChatIcon from "./ChatIcon";
 
 class MessageBubble extends Component {
     constructor(props) {
         super(props);
-        console.log("Hello I amde it to constructor");
         this.state = {
             hasMedia: props.message.type === "media",
             mediaDownloadFailed: false,
@@ -14,7 +13,6 @@ class MessageBubble extends Component {
     }
     componentDidMount = () => {
         const getType = async () => {
-            // console.log("I am retrieving the message type of ", this.props.message);
             this.setState({ ...this.state, type: (await this.props.message.getParticipant()).type });
             if (this.state.hasMedia) {
                 try {
@@ -32,24 +30,20 @@ class MessageBubble extends Component {
     componentDidUpdate = (prevProps, prevState, snapshot) => {
         document.getElementById(this.props.message.sid).scrollIntoView({ behavior: "smooth" });
     };
-    // Some JS for determining styles with props.direction
     render() { 
         const m = this.props.message;
         const type = this.state.type;
+        let direction = (this.props.direction === "incoming") ? "in" : "out";
         return (
-        <li id={m.sid} className="message__item">
-            <div className="message__item-div">
+        <li id={m.sid} className={`message__item_${direction}`}>
+            <div className={`message__item-div_${direction}`}>
                 <div>
                     <strong>
-                        {type === "chat" && (<span><ChatIcon></ChatIcon></span>)/*(<Icon style={{ fontSize: "1.6rem" }} component={ChatIcon}></Icon>)*/}
+                        {type === "chat" && (<span><ChatIcon></ChatIcon></span>)}
                         {type === "sms" && (<span type="mobile">From Mobile</span>)}
                         {` ${m.author}`}
                     </strong>
                     <br />
-                    <div className="make sure to remove this div">
-                        {/* No media allowed in the chat */}
-                        {/* {state.hasMedia && (<Media hasFailed={state.mediaDownloadFailed} url={state.mediaUrl}></Media>)} */}
-                    </div>
                     {m.body}
                 </div>
                 <span className="styles__time-date">{m.state.timestamp.toLocaleString()}</span>

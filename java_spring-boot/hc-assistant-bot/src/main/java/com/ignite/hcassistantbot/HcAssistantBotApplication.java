@@ -32,7 +32,7 @@ public class HcAssistantBotApplication implements CommandLineRunner {
 	public SessionsSettings buildSessionsSettings() throws Exception {
 		SessionsSettings sessionsSettings = SessionsSettings.newBuilder().setCredentialsProvider(
 				FixedCredentialsProvider.create(GoogleCredentials.fromStream(
-						new ClassPathResource("google-auth-json here").getInputStream()
+						new ClassPathResource(env.getProperty("GOOGLE_AUTH_JSON")).getInputStream()
 				).createScoped("https://www.googleapis.com/auth/cloud-platform"))
 		).build();
 		return sessionsSettings;

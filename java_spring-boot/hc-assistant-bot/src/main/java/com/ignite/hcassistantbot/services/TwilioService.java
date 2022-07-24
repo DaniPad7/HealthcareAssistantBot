@@ -12,11 +12,21 @@ public class TwilioService {
     public boolean sendToTwilio(DetectIntentResponse response, String conversationSid) {
         try {
             MessageCreator messageCreator = Message.creator(conversationSid);
-            messageCreator.setAuthor("system1")
+            messageCreator.setAuthor("Alphius")
                     .setBody(response.getQueryResult().getFulfillmentText()).create();
             return true;
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean sendQueryToTwilio(DetectIntentResponse response, String conversationSid, String author) {
+        try {
+            MessageCreator messageCreator = Message.creator(conversationSid);
+            messageCreator.setAuthor(author)
+                    .setBody(response.getQueryResult().getQueryText()).create();
+            return true;
+        } catch (Exception e) {
             return false;
         }
     }

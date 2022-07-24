@@ -3,8 +3,8 @@
 html {
     /* 62.5% font-size 0f 16px = 10px */
     font-size: 62.5%;
-    line-height: 1.15; /* 1 */
-  -webkit-text-size-adjust: 100%; /* 2 */
+    line-height: 1.15;
+  -webkit-text-size-adjust: 100%;
     font-family: 'Inter', sans-serif;
     font-family: 'Poppins', sans-serif;
   }
@@ -29,6 +29,8 @@ html {
     --color-snippetbar: #B5E5FF;
     --color-form-chat: #F4F4F1;
     --color-chat-shadow: #00000029;
+    --color-message-in: #D8DDE6;
+    --color-message-out: #C6D6F4;
   }
 
   /* Main CBloack NavBar============================= */
@@ -123,8 +125,6 @@ html {
   }
 
   .nav-container {
-    /* 108.8rem is fixed to match the nav-attachment-container, also block class needs to be removed
-    from mainblock section tag */
     width: 108.8rem;
     height: auto;
   }
@@ -132,7 +132,6 @@ html {
   .nav__item:hover > a {
     font-weight: bold;
     cursor: pointer;
-    /* color: var(--color-navbar); */
   }
 
   .nav__blur {
@@ -149,13 +148,7 @@ html {
     justify-content: space-between;
   }
   .nav__footer > div {
-    /* An approx that prevents css overflow */
     margin-right: 25.2rem;
-  }
-
-  /* Classes that allow z-index overlays */
-  .stack-top-layer1 {
-    /* z-index: 9;  was used in navbar component, second box*/
   }
 
   .nav-attachment-container {
@@ -180,13 +173,11 @@ html {
     top: 0px;
     left: 0px;
     height: 29.6rem;
-    /* UI Properties */
     background: transparent linear-gradient(78deg, #CAFEFF 0%, #F0FEFF 57%, #E7F3F4 100%) 0% 0% no-repeat padding-box;
     opacity: 1;
   }
   .block--faq {
     height: 102.2rem;
-    /* UI Properties */
     background: var(--color-white) 0% 0% no-repeat padding-box;
     opacity: 1;
   }
@@ -194,7 +185,6 @@ html {
     top: 0px;
     left: 0px;
     height: 76.8rem;
-    /* UI Properties */
     background: transparent linear-gradient(61deg, #CAFEFF 0%, #F0FEFF 57%, #E7F3F4 100%) 0% 0% no-repeat padding-box;
     opacity: 1;
   }
@@ -204,7 +194,6 @@ html {
     opacity: 1;
   }
   .block--third {
-    /* height of 76.8rem is only temporary */
     height: 76.8rem;
     background: var(--color-white) 0% 0% no-repeat padding-box;
     opacity: 1;
@@ -218,7 +207,6 @@ html {
   .block__title {
     height: 5.1rem;
     text-align: center;
-    /* third normal to medium is an invalid property value */
     font: normal normal 500 36px/55px Poppins;
     letter-spacing: 0;
     color: var(--color-title);
@@ -266,7 +254,6 @@ html {
 
   /* Contact Us */
   .contact__input {
-    /* padding temp */
     padding: 0 2rem 0 2rem;
     width: 40.2rem;
     height: 4.8rem;
@@ -287,7 +274,6 @@ html {
   }
   .contact__textarea {
     margin-left: 1.6rem;
-    /* padding temp */
     padding: 1.4rem 0 0 2rem;
     width: 42.2rem;
     height: 15.4rem;
@@ -306,19 +292,16 @@ html {
 
 .media-attachment-container {
   width: 67.5rem;
-  /* 68.3rem is an approx after clipping with the navbar */
   height: 68.3rem;
   position: relative;
 }
 
 .media__blur {
   width: 67.5rem;
-  /* 68.3rem is an approx after clipping with the navbar */
   height: 68.3rem;
   background: var(--color-blur) 0% 0% no-repeat padding-box;
   opacity: 0.32;
   filter: blur(5rem);
-  /* temporary styling */
   border-radius: 30rem;
 }
 .media__description {
@@ -348,9 +331,6 @@ html {
   letter-spacing: 0;
   color: var(--color-body);
 }
-.group23__img {
-  /* padding-top: 1rem; */
-}
 .group23__img > img {
   /* To remove the ~10px hover of the image */
   object-position: 0 1rem;
@@ -364,7 +344,6 @@ html {
   opacity: 1;
 }
 .media__title {
-  /* defualt is 35.4rem but there is css overflow with font-size 500 */
   width: 35.5rem;
   height: 13.3rem;
 }
@@ -382,7 +361,6 @@ html {
   margin: 0;
   padding: 17rem 0 0 13.9rem;
   width: 55.2rem;
-  /* 51.3rem is an approx */
   height: 51.3rem;
 }
 .svg-monitor-container {
@@ -395,7 +373,6 @@ html {
   text-align: right;
 }
 .media__circle {
-  /* approximated */
   margin: 14rem 0 0 5rem;
   border: 7rem solid var(--color-mediacircle);
   border-radius: 30rem;
@@ -493,7 +470,6 @@ html {
   padding: 0.7rem 1.4rem;
 }
 .btn__faq-tab-clicked {
-  /* some properties do not override the .btn class */
   height: 3.7rem;
   color: var(--color-title);
   background: transparent linear-gradient(72deg, var(--color-footer) 0%, #E7F3F4 100%) 0% 0% no-repeat padding-box;
@@ -554,17 +530,18 @@ html {
 
 .mask-group4__img {
   margin: auto;
-  /* background: transparent url('../public/MaskGroup4.png') 0% 0% no-repeat padding-box; */
   opacity: 1;
   width: 53.6rem;
   height: 42rem;
 }
 .mask-group5__img {
   margin: auto;
-  /* background: transparent url('../public/Mask\ Group\ 5.png') 0% 0% no-repeat padding-box; */
   opacity: 1;
   width: 53.6rem;
   height: 42rem;
+}
+#rep__img {
+  border-radius: 1rem;
 }
 
 /* FAQ */
@@ -604,16 +581,10 @@ html {
   margin: 1.5rem 0 1.5rem 80rem;
 }
 .static {
-  /* width: 9.7rem;
-  height: 9.7rem; */
-  /* top: 66.3rem;
-  left: 115.1rem; */
   bottom: 0.7rem;
   right: 11.8rem;
   position: fixed;
 }
-
-/* transitions are not functioning correctly, look further into it */
 
 #Component_1_1 {
   transition: display 0.9s ease-out;
@@ -633,7 +604,6 @@ html {
 /* Chatbot Form */
 .form-container {
   width: 45rem;
-  /* 55.8 or 95vh is a temp approx, was 65.8rem */
   height: 54.8rem;
   background: var(--color-form-chat) 0% 0% no-repeat padding-box;
   box-shadow: 0 0.3rem 0.8rem var(--color-chat-shadow);
@@ -645,7 +615,6 @@ html {
   border: none;
   resize: none;
   outline: none;
-  /* approx */
   width: 29.8rem;
   height: 5rem;
   letter-spacing: 0;
@@ -713,6 +682,9 @@ textarea::placeholder {
 .media-flex-alignitems-center > svg {
   margin-left: 1.4rem;
 }
+.media-flex-alignitems-center > span {
+  margin-left: 1.4rem;
+}
 .media-flex-alignitems-center > p {
   margin: 0 0 0 0.9rem;
   height: 2.3rem;
@@ -720,7 +692,29 @@ textarea::placeholder {
   color: var(--color-body);
 }
 #my-form {
-  
   display: none;
+}
+
+.message__item_out {
+  margin-bottom: 1rem;
+  margin-left: 0.1rem;
+}
+.message__item_in {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: right;
+}
+.message__item-div_out {
+  width: fit-content;
+  border: solid var(--color-message-out);
+  border-radius: 0.5rem;
+  background-color: var(--color-message-out);
+}
+.message__item-div_in {
+  width: fit-content;
+  text-align: left;
+  border: solid var(--color-message-in);
+  border-radius: 0.5rem;
+  background-color: var(--color-message-in);
 }
 
